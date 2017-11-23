@@ -7,15 +7,23 @@
 //
 
 import UIKit
+import UserNotifications
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
 
+    var timer: Timer!
+    var backgroundTask: UIBackgroundTaskIdentifier = UIBackgroundTaskInvalid
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
+        
+        //Get user permission for notifications
+        let center = UNUserNotificationCenter.current()
+        center.requestAuthorization(options:[.alert, .sound]) { (granted, error) in }
+        
         return true
     }
 
@@ -27,6 +35,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func applicationDidEnterBackground(_ application: UIApplication) {
         // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
         // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
+        
+        // MARK: Register Backgroundtask.
+        self.registerBackgroundTask()
+        self.applicationState()
     }
 
     func applicationWillEnterForeground(_ application: UIApplication) {
@@ -42,5 +54,54 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
 
+}
+
+// MARK: BackgroundTask
+extension AppDelegate {
+    
+    func applicationState() {
+        //call endBackgroundTask() on completion..
+        switch UIApplication.shared.applicationState {
+        case .active:
+            print("App is active.")
+        case .background:
+            print("App is in background.")
+            print("Background time remaining = \(UIApplication.shared.backgroundTimeRemaining) seconds")
+            // PERFORM YOUR BACKGROUND TASK
+            timer = Timer.scheduledTimer(timeInterval: 10.0, target: self, selector: #selector(update), userInfo: nil, repeats: true)
+        case .inactive:
+            break
+        }
+    }
+    
+    func registerBackgroundTask() {
+        backgroundTask = UIApplication.shared.beginBackgroundTask { [weak self] in
+            self?.endBackgroundTask()
+        }
+        assert(backgroundTask != UIBackgroundTaskInvalid)
+    }
+    
+    func endBackgroundTask() {
+        print("Background task ended.")
+        UIApplication.shared.endBackgroundTask(backgroundTask)
+        backgroundTask = UIBackgroundTaskInvalid
+    }
+    
+    @objc func update() {
+        
+        print("Background time remaining = \(UIApplication.shared.backgroundTimeRemaining) seconds")
+        self.notify()
+    }
+    
+    func notify() {
+        
+        let content = UNMutableNotificationContent()
+        content.title = "Application entered in Background State"
+        content.body = "Backgrround time remaining: \(UIApplication.shared.backgroundTimeRemaining) seconds"
+        content.sound = .default()
+        
+        let request = UNNotificationRequest(identifier: "iOSBackgroundTask", content: content, trigger: nil)
+        UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
+    }
 }
 
