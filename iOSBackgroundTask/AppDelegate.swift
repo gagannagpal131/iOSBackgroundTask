@@ -68,7 +68,8 @@ extension AppDelegate {
             print("App is in background.")
             print("Background time remaining = \(UIApplication.shared.backgroundTimeRemaining) seconds")
             // PERFORM YOUR BACKGROUND TASK
-            timer = Timer.scheduledTimer(timeInterval: 10.0, target: self, selector: #selector(update), userInfo: nil, repeats: true)
+            
+            timer = Timer.scheduledTimer(timeInterval: 5.0, target: self, selector: #selector(update), userInfo: nil, repeats: true)
         case .inactive:
             break
         }
